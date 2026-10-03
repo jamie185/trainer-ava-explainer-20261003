@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ava for trainers · how it works</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#222326; --ink2:rgba(31,32,37,.60); --ink3:rgba(31,32,37,.38); --cap:#8A8F99;
+  --page:#FFFFFF; --canvas:#F5F7FB; --card:#EBF0F8; --tile:#FFFFFF; --dark:#1F2025; --track:#E7EBF2; --hair:#ECEEF2;
+  --strain:#F5A524; --ok:#8BD42A; --ai:#8C7CF6; --labs:#1FC7A6; --info:#4DA3FF; --alert:#FF5E3A;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --float:0 16px 40px -18px rgba(30,40,70,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,sans-serif;font-weight:500;color:var(--ink);background:var(--page);line-height:1.45;font-size:17px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+section{padding:120px 0}
+h1,h2,h3,h4{font-weight:650;letter-spacing:-.03em;line-height:1.0}
+h1{font-size:clamp(46px,7.4vw,84px)}
+h2{font-size:clamp(36px,5.2vw,60px)}
+h3{font-size:clamp(24px,2.6vw,30px);letter-spacing:-.02em;line-height:1.1}
+h4{font-size:19px;letter-spacing:-.015em;line-height:1.2}
+.sub{font-size:clamp(19px,2vw,23px);line-height:1.35;color:var(--ink2);max-width:640px}
+.center{text-align:center}.center .sub{margin-left:auto;margin-right:auto}
+.head{margin-bottom:56px}
+.head .sub{margin-top:20px}
+.small{font-size:15px;color:var(--ink2)}
+.cap{font-size:13px;color:var(--cap);letter-spacing:.01em}
+
+/* nav */
+nav{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:4px;padding:6px;border-radius:32px;
+  background:rgba(255,255,255,.66);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);box-shadow:var(--float);max-width:calc(100% - 24px);overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav a{white-space:nowrap;text-decoration:none;color:var(--ink2);font-size:14px;font-weight:600;padding:9px 15px;border-radius:128px;transition:background .3s var(--ease),color .3s var(--ease)}
+nav a:hover{background:#F1F3F7;color:var(--ink)}
+
+/* hero */
+.hero{padding:170px 0 100px;text-align:center;background:radial-gradient(1200px 520px at 50% -10%,#E6EEFB 0%,rgba(255,255,255,0) 70%)}
+.hero h1 span{color:var(--ai)}
+.hero .sub{margin:26px auto 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:820px;margin:64px auto 0}
+.stat{background:var(--canvas);border-radius:24px;padding:28px 22px;text-align:left}
+.stat b{display:block;font-size:52px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.stat span{display:block;margin-top:10px;font-size:15px;color:var(--ink2);line-height:1.35}
+
+/* three audiences */
+.aud{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border-radius:24px;padding:32px}
+.tile{background:var(--tile);border-radius:18px;padding:22px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:22px}
+.ico svg{width:22px;height:22px}
+.aud .card h3{margin-bottom:10px}
+.aud .card p{color:var(--ink2);font-size:16px}
+.aud ul{list-style:none;margin-top:20px;display:grid;gap:9px}
+.aud li{font-size:15px;padding-left:22px;position:relative;line-height:1.35}
+.aud li:before{content:"";position:absolute;left:2px;top:7px;width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.35}
+.who{font-size:13px;font-weight:600;color:var(--cap);margin-bottom:6px}
+
+/* router diagram */
+.dark{background:var(--dark);color:#fff}
+.dark .sub{color:rgba(255,255,255,.58)}
+.flow{display:grid;grid-template-columns:1fr 64px 1.15fr 64px 1.5fr;align-items:center;gap:0}
+.node{background:rgba(255,255,255,.06);border-radius:22px;padding:24px}
+.node h4{color:#fff;margin-bottom:6px}
+.node p{color:rgba(255,255,255,.58);font-size:15px}
+.arrow{height:2px;background:rgba(255,255,255,.22);position:relative;margin:0 10px}
+.arrow:after{content:"";position:absolute;right:-2px;top:-5px;border-left:9px solid rgba(255,255,255,.4);border-top:6px solid transparent;border-bottom:6px solid transparent}
+.lanes{display:grid;gap:10px}
+.lane{border-radius:18px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start}
+.lane i{flex:0 0 10px;height:10px;border-radius:50%;margin-top:7px}
+.lane b{display:block;font-weight:650;color:#fff;font-size:16px}
+.lane span{display:block;font-size:14px;color:rgba(255,255,255,.6);line-height:1.35;margin-top:2px}
+.l-staff{background:rgba(77,163,255,.12)}.l-staff i{background:var(--info)}
+.l-tr{background:rgba(140,124,246,.16)}.l-tr i{background:var(--ai)}
+.l-you{background:rgba(31,199,166,.12)}.l-you i{background:var(--labs)}
+.l-no{background:rgba(255,255,255,.05)}.l-no i{background:rgba(255,255,255,.35)}
+.walls{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
+.walls .node p{margin-top:4px}
+
+/* can do */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat{background:var(--canvas);border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:16px}
+.feat h4{font-size:21px}
+.feat p{color:var(--ink2);font-size:15px}
+.chat{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.b{max-width:88%;padding:10px 14px;border-radius:18px;font-size:14.5px;line-height:1.38}
+.b.t{align-self:flex-end;background:#DCF8C6;border-bottom-right-radius:6px}
+.b.a{align-self:flex-start;background:#fff;border-bottom-left-radius:6px;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.b small{display:block;font-size:11.5px;color:var(--cap);margin-bottom:2px;font-weight:600}
+
+/* won't */
+.nope{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.row{display:flex;gap:16px;align-items:flex-start;background:var(--tile);border-radius:18px;padding:20px 22px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.row .ico{margin:0;flex:0 0 40px;width:40px;height:40px;border-radius:10px}
+.row h4{font-size:17px}
+.row p{font-size:15px;color:var(--ink2);margin-top:3px}
+.row em{font-style:normal;color:var(--ink);font-weight:600}
+.canvas{background:var(--canvas)}
+
+/* handoff */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;counter-reset:s}
+.step{background:var(--card);border-radius:22px;padding:22px;position:relative}
+.step:before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--dark);color:#EBF0F8;font-size:14px;font-weight:700;margin-bottom:16px}
+.step h4{font-size:17px;margin-bottom:6px}
+.step p{font-size:14.5px;color:var(--ink2);line-height:1.38}
+.step .tag{display:block;margin-top:12px;font-size:12.5px;font-weight:650}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}
+.mode{border-radius:20px;padding:20px 22px;background:var(--canvas)}
+.mode.on{background:var(--dark);color:#fff}
+.mode.on p{color:rgba(255,255,255,.62)}
+.mode h4{font-size:18px;margin-bottom:6px}
+.mode p{font-size:14.5px;color:var(--ink2)}
+.mode .now{display:block;margin-top:10px;font-size:13px;font-weight:650;color:var(--labs)}
+
+/* locks */
+.locks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.lock{background:var(--tile);border-radius:20px;padding:22px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.lock b{display:block;font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1;margin-bottom:12px}
+.lock h4{font-size:17px;margin-bottom:6px}
+.lock p{font-size:14.5px;color:var(--ink2)}
+
+/* try */
+.try{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:stretch}
+.phone{background:#EFE7DD;border-radius:32px;padding:22px 18px;display:flex;flex-direction:column;gap:9px;box-shadow:var(--float)}
+.phone .top{font-size:13px;font-weight:650;color:var(--ink2);text-align:center;margin-bottom:6px}
+.list{display:grid;gap:10px}
+.list .tile{display:flex;justify-content:space-between;gap:16px;align-items:center}
+.list code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;background:var(--canvas);padding:4px 9px;border-radius:9px}
+.list span{font-size:14px;color:var(--ink2);text-align:right}
+
+/* status */
+.status{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.status .card ul{list-style:none;display:grid;gap:12px;margin-top:18px}
+.status li{font-size:16px;line-height:1.4;padding-left:26px;position:relative}
+.status li:before{content:"";position:absolute;left:0;top:5px;width:14px;height:14px;border-radius:5px;background:var(--ok);opacity:.85}
+.status .next li:before{background:var(--strain)}
+footer{padding:60px 0 90px;text-align:center;color:var(--cap);font-size:14px}
+
+/* motion */
+.rv{opacity:0;transform:translateY(28px);filter:blur(8px);transition:opacity 1s var(--ease),transform 1s var(--ease),filter 1s var(--ease)}
+.rv.in{opacity:1;transform:none;filter:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none;transition:none}html{scroll-behavior:auto}}
+
+@media (max-width:980px){
+  section{padding:90px 0}
+  .aud,.grid3,.walls{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr;gap:14px}
+  .arrow{width:2px;height:28px;margin:0 auto}
+  .arrow:after{right:-5px;top:auto;bottom:-3px;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid rgba(255,255,255,.4);border-bottom:0}
+  .steps{grid-template-columns:1fr 1fr}
+  .modes,.status,.try{grid-template-columns:1fr}
+  .locks{grid-template-columns:1fr 1fr}
+  .nope{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wrap{padding:0 18px}
+  .stats{grid-template-columns:1fr}
+  .steps,.locks{grid-template-columns:1fr}
+  .hero{padding-top:140px}
+  .list .tile{flex-direction:column;align-items:flex-start}
+  .list span{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#who">Who</a><a href="#route">One number</a><a href="#can">Can do</a><a href="#cant">Won't do</a><a href="#notes">Channels</a><a href="#va">VA hand-off</a><a href="#safe">Safety</a><a href="#tested">Tested</a><a href="#try">Try it</a><a href="#status">Status</a>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1 class="rv">One Ava.<br><span>Now for your trainers.</span></h1>
+    <p class="sub rv">Same WhatsApp number. Trainers get their own Ava that sees their clients, their calendar and their portal, and nothing else.</p>
+    <div class="stats">
+      <div class="stat rv"><b>17</b><span>trainers switched on, every rostered PT</span></div>
+      <div class="stat rv"><b>1</b><span>number for staff and trainers. Ava knows who's who</span></div>
+      <div class="stat rv"><b>3</b><span>separate locks keep each trainer to their own clients</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="who" class="canvas">
+  <div class="wrap">
+    <div class="head center rv">
+      <h2>Three people,<br>three versions of Ava</h2>
+      <p class="sub">Ava checks who's messaging, then puts on the right hat. Each hat has its own tools and its own rules.</p>
+    </div>
+    <div class="aud">
+      <div class="card rv">
+        <div class="ico" style="background:rgba(31,199,166,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#1FC7A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.6 5.6L20 8.4l-4 4 1 5.6-5-2.8-5 2.8 1-5.6-4-4 5.4-.8z"/></svg></div>
+        <div class="who">You</div>
+        <h3>Owner</h3>
+        <p>Everything staff Ava does, plus a look through any trainer's eyes.</p>
+        <ul style="color:#1FC7A6">
+          <li style="color:var(--ink)">Full staff Ava for your own requests</li>
+          <li style="color:var(--ink)">"as emma: …" shows exactly what Emma would get</li>
+          <li style="color:var(--ink)">Preview is read-only, nothing changes</li>
+          <li style="color:var(--ink)">VA hand-offs land with you while in test mode</li>
+        </ul>
+      </div>
+      <div class="card rv">
+        <div class="ico" style="background:rgba(77,163,255,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#4DA3FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></div>
+        <div class="who">Gabrielle and the VAs</div>
+        <h3>Staff Ava</h3>
+        <p>The office brain. Unchanged by this work.</p>
+        <ul style="color:#4DA3FF">
+          <li style="color:var(--ink)">HubSpot, JFCall, leads, sequences</li>
+          <li style="color:var(--ink)">Bookings for any trainer's clients</li>
+          <li style="color:var(--ink)">Reply alerts: "tell me if Roger replies"</li>
+          <li style="color:var(--ink)">Closes trainer hand-offs when a VA replies "done"</li>
+        </ul>
+      </div>
+      <div class="card rv">
+        <div class="ico" style="background:rgba(140,124,246,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#8C7CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M4 9v6M20 9v6M2 11v2M22 11v2"/></svg></div>
+        <div class="who">The personal trainers</div>
+        <h3>Trainer Ava</h3>
+        <p>New. A PA for each trainer, scoped to their own book.</p>
+        <ul style="color:#8C7CF6">
+          <li style="color:var(--ink)">Their calendar, clients and portal</li>
+          <li style="color:var(--ink)">Book and move their own clients' sessions</li>
+          <li style="color:var(--ink)">How-to for JF Coach, the portal and JF Notes</li>
+          <li style="color:var(--ink)">Knows their gym and their VA by name</li>
+          <li style="color:var(--ink)">No money, no HubSpot, no other trainers</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="route" class="dark">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>One number.<br>Ava sorts the sender.</h2>
+      <p class="sub">The WhatsApp number decides who someone is. Typing "I'm Gabrielle" changes nothing.</p>
+    </div>
+    <div class="flow rv">
+      <div class="node"><h4>A WhatsApp message</h4><p>Direct message to Ava, from a verified phone number.</p></div>
+      <div class="arrow"></div>
+      <div class="node"><h4>Who sent it?</h4><p>Ava checks the number against the staff list and the trainer list.</p></div>
+      <div class="arrow"></div>
+      <div class="lanes">
+        <div class="lane l-staff"><i></i><div><b>Staff number</b><span>Staff Ava, with the office tools</span></div></div>
+        <div class="lane l-tr"><i></i><div><b>Trainer number</b><span>Trainer Ava, with only that trainer's data</span></div></div>
+        <div class="lane l-you"><i></i><div><b>You, starting "as emma:"</b><span>Trainer Ava as Emma, read-only preview</span></div></div>
+        <div class="lane l-no"><i></i><div><b>Anyone else</b><span>No reply. Logged quietly.</span></div></div>
+      </div>
+    </div>
+    <div class="walls">
+      <div class="node rv"><h4>No shared memory</h4><p>A trainer's chat never feeds staff Ava, and staff conversations never reach a trainer.</p></div>
+      <div class="node rv"><h4>Different toolboxes</h4><p>Trainer Ava has no HubSpot, email, JFCall or pay tools to misuse, even if asked nicely.</p></div>
+      <div class="node rv"><h4>In the trainers' group</h4><p>Ava stays quiet. A trainer who tags her gets one private nudge a day: "message me directly".</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="can">
+  <div class="wrap">
+    <div class="head center rv">
+      <h2>What a trainer<br>can ask her</h2>
+      <p class="sub">Answers come live from JF Coach and the Trainer Portal, as that trainer sees them.</p>
+    </div>
+    <div class="grid3">
+      <div class="feat rv">
+        <h4>Their day</h4><p>Today, tomorrow or the week. Who's next, gaps, free sessions still to come.</p>
+        <div class="chat">
+          <div class="b t">whats on tmrw</div>
+          <div class="b a"><small>Ava</small>pretty full: liam t 7:45, priya s 8:30, josh m ksp at 9, then a free session at 10. you're clear after 11.</div>
+        </div>
+      </div>
+      <div class="feat rv">
+        <h4>Book and move</h4><p>Their own clients only, up to 4 weeks out. JF Coach tells the client, like when the trainer moves it.</p>
+        <div class="chat">
+          <div class="b t">can u move hannah to thurs 6pm</div>
+          <div class="b a"><small>Ava</small>done, hannah w is now thu 9 oct, 6pm. she'll get the usual jf coach notification.</div>
+        </div>
+      </div>
+      <div class="feat rv">
+        <h4>Cancels, with a yes</h4><p>Ava asks once and records the right reason, so pay and spares come out right.</p>
+        <div class="chat">
+          <div class="b t">cancel josh fri he's sick</div>
+          <div class="b a"><small>Ava</small>cancel josh m, fri 10 oct 7am, client cancelled with enough notice? reply yes and it's done.</div>
+        </div>
+      </div>
+      <div class="feat rv">
+        <h4>Their clients</h4><p>Weight change, solo workouts, habits, steps, check-ins, program end, last app open.</p>
+        <div class="chat">
+          <div class="b t">has priya trained by herself this week</div>
+          <div class="b a"><small>Ava</small>yep, 2 solo workouts (mon and wed) and she's down 1.4kg this month 🎉</div>
+        </div>
+      </div>
+      <div class="feat rv">
+        <h4>Their portal to-dos</h4><p>The Today list and retention board: programs due, check-ins, measurements, who to message.</p>
+        <div class="chat">
+          <div class="b t">who needs a new program</div>
+          <div class="b a"><small>Ava</small>liam t ends sun, priya s tue. josh m's already ended, i'd do him first.</div>
+        </div>
+      </div>
+      <div class="feat rv">
+        <h4>How-to and coaching</h4><p>JF Coach, the portal and JF Notes with the exact buttons, plus programming help.</p>
+        <div class="chat">
+          <div class="b t">how do i delete a weight log i put in wrong</div>
+          <div class="b a"><small>Ava</small>open the client → progress → add body weight → pick the date → "clear weight entry" under update.</div>
+        </div>
+      </div>
+    </div>
+    <p class="cap center" style="margin-top:22px">Example chats use made-up clients.</p>
+  </div>
+</section>
+
+<section id="cant" class="canvas">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>What she won't do,<br>and who she sends it to</h2>
+      <p class="sub">Every "no" points somewhere the trainer can actually go. No HubSpot, no dead links.</p>
+    </div>
+    <div class="nope">
+      <div class="row rv"><div class="ico" style="background:rgba(255,94,58,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5E3A" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6v2M12 16v2"/></svg></div><div><h4>Pay, payslips, super, logins, uniform, iPad</h4><p>Goes to <em>you</em>: "message jamie directly".</p></div></div>
+      <div class="row rv"><div class="ico" style="background:rgba(255,94,58,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5E3A" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/></svg></div><div><h4>A client's payments, pause, refund or price</h4><p>Goes to <em>Gabrielle</em>. A client cancelling their membership emails support@.</p></div></div>
+      <div class="row rv"><div class="ico" style="background:rgba(255,94,58,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5E3A" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 8l5 5M22 8l-5 5"/></svg></div><div><h4>Other trainers' clients or schedules</h4><p>"i can only see your own clients and your own portal."</p></div></div>
+      <div class="row rv"><div class="ico" style="background:rgba(255,94,58,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5E3A" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v12H7l-3 3z"/><path d="M9 9l6 4M15 9l-6 4"/></svg></div><div><h4>Texting, calling or emailing clients</h4><p>Points them to <em>their JF Coach chat</em>, or hands it to their VA.</p></div></div>
+      <div class="row rv"><div class="ico" style="background:rgba(255,94,58,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5E3A" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><div><h4>HubSpot, or what the office said to a client</h4><p>Trainers don't have HubSpot, so Ava never names it or links to it, even when saying no. Anything for the office goes on the client's <em>JF Notes</em> card, tagged.</p></div></div>
+      <div class="row rv"><div class="ico" style="background:rgba(255,94,58,.12)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5E3A" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></div><div><h4>Staff phone numbers</h4><p>Not hers to give out. Client numbers are fine, for their own clients.</p></div></div>
+      <div class="row rv"><div class="ico" style="background:rgba(245,165,36,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#F5A524" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><h4>Spare session balances</h4><p>Not yet, it's being built. Urgent ones go to <em>Gabrielle</em>.</p></div></div>
+      <div class="row rv"><div class="ico" style="background:rgba(245,165,36,.14)"><svg viewBox="0 0 24 24" fill="none" stroke="#F5A524" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div><div><h4>Something broken in the app</h4><p>Tells them to tap the round <em>report a bug</em> button in JF Coach (or in the portal), with a screenshot, plus any workaround.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="notes">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>Where each message<br>should go</h2>
+      <p class="sub">Ava teaches trainers the right channel for each thing, using only the apps they actually have.</p>
+    </div>
+    <div class="grid3">
+      <div class="feat rv"><h4>For the client</h4><p>Their JF Coach chat with that client. Ava can read it for them, never post in it.</p></div>
+      <div class="feat rv"><h4>For Gabrielle or the VA</h4><p>A comment on the client's JF Notes card with the person tagged. That lands as a task for them.</p></div>
+      <div class="feat rv"><h4>Urgent or personal</h4><p>WhatsApp the person. Pay, logins, iPads and uniform go straight to you.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="va">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>The VA hand-off:<br>trainer Ava meets staff Ava</h2>
+      <p class="sub">This is the only place the two cross. A trainer asks for something only a VA can do, and Ava carries it across and back.</p>
+    </div>
+    <div class="steps">
+      <div class="step rv"><h4>Trainer asks</h4><p>"can you get my va to call liam and find a time next week"</p><span class="tag" style="color:var(--ai)">Trainer Ava</span></div>
+      <div class="step rv"><h4>Ava checks the gym</h4><p>Finds the trainer's gym and its VA from the routing sheet. Two gyms? She asks which.</p><span class="tag" style="color:var(--ai)">Trainer Ava</span></div>
+      <div class="step rv"><h4>VA gets it</h4><p>One WhatsApp DM from Ava to the VA, plus a call task in the VA's list.</p><span class="tag" style="color:var(--info)">Staff Ava</span></div>
+      <div class="step rv"><h4>VA replies "done"</h4><p>Or "no answer". Staff Ava closes the hand-off; no need to message the trainer.</p><span class="tag" style="color:var(--info)">Staff Ava</span></div>
+      <div class="step rv"><h4>Trainer's told</h4><p>"mikaela's sorted liam, he's booked thu 6pm" or "couldn't reach him yet".</p><span class="tag" style="color:var(--ai)">Trainer Ava</span></div>
+    </div>
+    <div class="modes">
+      <div class="mode rv"><h4>Off</h4><p>Ava gives the trainer a ready-made message to send their VA themselves.</p></div>
+      <div class="mode on rv"><h4>Test, now</h4><p>You get a copy of exactly what the VA would receive. The trainer is told honestly it isn't on yet, with a ready-to-send message for their VA by name.</p><span class="now">Current setting</span></div>
+      <div class="mode rv"><h4>On</h4><p>The real VA gets the DM and the task. Switch on once you've seen a few land right.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="safe" class="canvas">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>Locked three times<br>to their own clients</h2>
+      <p class="sub">Even if a trainer, or a client's message, talks Ava into trying, the systems underneath say no.</p>
+    </div>
+    <div class="locks">
+      <div class="lock rv"><b style="color:var(--ai)">1</b><h4>Ava's trainer service</h4><p>Forces every lookup to the verified trainer. No name in a message changes that.</p></div>
+      <div class="lock rv"><b style="color:var(--info)">2</b><h4>JF Coach</h4><p>Acts as that trainer: own book, own appointments. A client who moves to another trainer drops off straight away.</p></div>
+      <div class="lock rv"><b style="color:var(--labs)">3</b><h4>Trainer Portal</h4><p>Opens as the trainer's own login. Money and HubSpot fields are stripped.</p></div>
+      <div class="lock rv"><b style="color:var(--strain)">+</b><h4>And the rest</h4><p>Cancels need a yes. 4 weeks max. Client chats are read as data, never as orders.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="tested">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>Stress-tested<br>as every trainer</h2>
+      <p class="sub">Sol agents played all 17 trainers in their own words, tried to trick Ava, and graded every reply as if they were the trainer.</p>
+    </div>
+    <div class="locks">
+      <div class="lock rv"><b>425</b><h4>Test chats</h4><p>888 messages across all 17 trainers, read-only previews, nothing changed or sent.</p></div>
+      <div class="lock rv"><b>0</b><h4>HubSpot mentions</h4><p>After the fixes. Before, Ava said "hubspot record link" to trainers.</p></div>
+      <div class="lock rv"><b>0</b><h4>Data leaks</h4><p>29 trick and injection chats. No other trainer's clients, pay or staff numbers.</p></div>
+      <div class="lock rv"><b>7</b><h4>Guides rebuilt</h4><p>Checked against the real JF Coach, portal and JF Notes code, button by button.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="try">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>Try it as<br>any trainer</h2>
+      <p class="sub">Message Ava from your phone and start with "as" and their first name. You'll see exactly what they'd see. Nothing gets changed.</p>
+    </div>
+    <div class="try">
+      <div class="phone rv">
+        <div class="top">Ava</div>
+        <div class="b t">as emma: who needs a new program?</div>
+        <div class="b a"><small>Ava, previewing Emma</small>coming up: liam t ends sun 4 oct, priya s tue 6 oct. josh m's already ended, i'd start there.</div>
+        <div class="b t">as ahmad: move my 9am tmrw to 10</div>
+        <div class="b a"><small>Ava, previewing Ahmad</small>i'd move hannah w from sat 9am to 10am. preview only, so nothing's changed.</div>
+      </div>
+      <div class="list">
+        <div class="tile rv"><code>as emma: what's on tomorrow?</code><span>Schedule</span></div>
+        <div class="tile rv"><code>as finn: who's lost weight this month?</code><span>Client progress</span></div>
+        <div class="tile rv"><code>as teresa: how do i delete a weight log?</code><span>How-to</span></div>
+        <div class="tile rv"><code>as daniel: what's on my portal to-do?</code><span>Portal</span></div>
+        <div class="tile rv"><code>as sophie: what's my pay this week?</code><span>Watch her say no</span></div>
+        <div class="tile rv"><code>as marcus: show me guido's clients</code><span>Watch her say no</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="status" class="canvas">
+  <div class="wrap">
+    <div class="head rv">
+      <h2>Where it's at</h2>
+      <p class="sub">Saturday 3 October 2026.</p>
+    </div>
+    <div class="status">
+      <div class="card rv">
+        <h3>Live</h3>
+        <ul>
+          <li>All 17 trainers switched on, including Samantha</li>
+          <li>Book, move and cancel-with-a-yes for their own clients</li>
+          <li>Portal, JF Coach data and how-to guides</li>
+          <li>VA hand-off in test mode, landing with you</li>
+          <li>Group chat nudge: private DM, nothing posted in the group</li>
+        </ul>
+      </div>
+      <div class="card next rv">
+        <h3>Next</h3>
+        <ul>
+          <li>You add Ava to the trainers' group and tell them</li>
+          <li>Watch a few VA hand-offs, then switch them on</li>
+          <li>Spare session balances, once they're built</li>
+          <li>Nightly review counts trainer chats on their own</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>Jamie Fitness · Ava for trainers · explainer</footer>
+
+<script>
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=(i%4)*70+'ms';io.observe(el)});
+</script>
+</body>
+</html>
